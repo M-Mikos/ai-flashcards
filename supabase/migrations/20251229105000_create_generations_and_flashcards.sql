@@ -24,7 +24,16 @@ create extension if not exists pgcrypto;
 -- 1. enumerated types
 --------------------------------------------------------------------------------
 -- source_enum defines the origin of a flashcard; may be extended later
-create type if not exists source_enum as enum ('ai_generated', 'ai_edited', 'manual');
+do $$
+begin
+    -- create enum only if it does not already exist
+    if not exists (
+        select 1 from pg_type where typname = 'source_enum'
+    ) then
+        create type source_enum as enum ('ai_generated', 'ai_edited', 'manual');
+    end if;
+end
+$$;
 
 --------------------------------------------------------------------------------
 -- 2. table: generations
@@ -105,40 +114,48 @@ alter table flashcards enable row level security;
 --       access rules explicit, auditable and easy to evolve.
 
 -- 4.1 select
-create policy if not exists generations_select_authenticated
+drop policy if exists generations_select_authenticated on generations;
+create policy generations_select_authenticated
     on generations for select to authenticated
     using (user_id = auth.uid());
 
-create policy if not exists generations_select_anon
+drop policy if exists generations_select_anon on generations;
+create policy generations_select_anon
     on generations for select to anon
     using (false);
 
 -- 4.2 insert
-create policy if not exists generations_insert_authenticated
+drop policy if exists generations_insert_authenticated on generations;
+create policy generations_insert_authenticated
     on generations for insert to authenticated
     with check (user_id = auth.uid());
 
-create policy if not exists generations_insert_anon
+drop policy if exists generations_insert_anon on generations;
+create policy generations_insert_anon
     on generations for insert to anon
     with check (false);
 
 -- 4.3 update
-create policy if not exists generations_update_authenticated
+drop policy if exists generations_update_authenticated on generations;
+create policy generations_update_authenticated
     on generations for update to authenticated
     using (user_id = auth.uid())
     with check (user_id = auth.uid());
 
-create policy if not exists generations_update_anon
+drop policy if exists generations_update_anon on generations;
+create policy generations_update_anon
     on generations for update to anon
     using (false)
     with check (false);
 
 -- 4.4 delete
-create policy if not exists generations_delete_authenticated
+drop policy if exists generations_delete_authenticated on generations;
+create policy generations_delete_authenticated
     on generations for delete to authenticated
     using (user_id = auth.uid());
 
-create policy if not exists generations_delete_anon
+drop policy if exists generations_delete_anon on generations;
+create policy generations_delete_anon
     on generations for delete to anon
     using (false);
 
@@ -146,50 +163,69 @@ create policy if not exists generations_delete_anon
 -- 5. rls policies – flashcards
 --------------------------------------------------------------------------------
 -- 5.1 select
-create policy if not exists flashcards_select_authenticated
+drop policy if exists flashcards_select_authenticated on flashcards;
+create policy flashcards_select_authenticated
     on flashcards for select to authenticated
     using (user_id = auth.uid());
 
-create policy if not exists flashcards_select_anon
+drop policy if exists flashcards_select_anon on flashcards;
+create policy flashcards_select_anon
     on flashcards for select to anon
     using (false);
 
 -- 5.2 insert
-create policy if not exists flashcards_insert_authenticated
+drop policy if exists flashcards_insert_authenticated on flashcards;
+create policy flashcards_insert_authenticated
     on flashcards for insert to authenticated
     with check (user_id = auth.uid());
 
-create policy if not exists flashcards_insert_anon
+drop policy if exists flashcards_insert_anon on flashcards;
+create policy flashcards_insert_anon
     on flashcards for insert to anon
     with check (false);
 
 -- 5.3 update
-create policy if not exists flashcards_update_authenticated
+drop policy if exists flashcards_update_authenticated on flashcards;
+create policy flashcards_update_authenticated
     on flashcards for update to authenticated
     using (user_id = auth.uid())
     with check (user_id = auth.uid());
 
-create policy if not exists flashcards_update_anon
+drop policy if exists flashcards_update_anon on flashcards;
+create policy flashcards_update_anon
     on flashcards for update to anon
     using (false)
     with check (false);
 
 -- 5.4 delete
-create policy if not exists flashcards_delete_authenticated
+drop policy if exists flashcards_delete_authenticated on flashcards;
+create policy flashcards_delete_authenticated
     on flashcards for delete to authenticated
     using (user_id = auth.uid());
 
-create policy if not exists flashcards_delete_anon
+drop policy if exists flashcards_delete_anon on flashcards;
+create policy flashcards_delete_anon
     on flashcards for delete to anon
     using (false);
 
 --------------------------------------------------------------------------------
 -- 6. admin convenience (optional)
 --------------------------------------------------------------------------------
--- allow role "admin" (assumed to exist in supabase projects) to bypass rls while
--- retaining policies for ordinary users. this is a one-time grant.
-comment on role admin is 'application administrator with bypassrls';
-grant bypassrls on database current_database() to admin;
+-- many supabase projects rely on the built-in `service_role` to bypass rls.  if you
+-- prefer a separate `admin` role, ensure it exists first — otherwise this code is
+-- harmlessly skipped.
+
+do $$
+declare
+    db_name text := current_database();
+begin
+    if exists (select 1 from pg_roles where rolname = 'admin') then
+        comment on role admin is 'application administrator with bypassrls';
+        -- grant must reference the database name literally; use dynamic sql
+        execute format('grant bypassrls on database %I to admin', db_name);
+    end if;
+end
+$$;
 
 -- end of migration
 
