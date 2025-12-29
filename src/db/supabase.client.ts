@@ -11,3 +11,5 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKey);
 export type SupabaseClient = typeof supabaseClient;
+
+export const TEST_USER_ID = "8403a7cd-d430-4deb-a51f-2145f28900b4";

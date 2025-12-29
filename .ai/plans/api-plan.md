@@ -17,20 +17,6 @@
   - Success: 201 Created; errors: 400 length/validation, 401 unauthorized, 500 ai_error.
   - Notes: validate length, compute hash of input, store timing + model name, set generated_count based on AI output count.
 
-- GET `/api/generations`
-  - Desc: List user generations.
-  - Query: `page`, `pageSize` (default 20, max 100); `sort` (default `created_at desc`).
-  - Response: `{ "items": [ ... ], "page": number, "pageSize": number, "total": number }`
-  - Success: 200; errors: 401.
-
-- GET `/api/generations/:id`
-  - Desc: Get single generation with stats.
-  - Response: generation object; 404 if not found/owned; 401 unauthorized.
-
-- DELETE `/api/generations/:id`
-  - Desc: Delete generation (cascades flashcards).
-  - Response: 204; errors: 401, 404.
-
 ### Flashcards
 
 - POST `/api/flashcards`
