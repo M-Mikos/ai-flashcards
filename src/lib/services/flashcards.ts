@@ -1,7 +1,13 @@
 import { z } from "zod";
 
 import { TEST_USER_ID, type SupabaseClient } from "../../db/supabase.client.ts";
-import type { BulkCreateFlashcardsResponse, FlashcardCreateResponse, SourceEnum } from "../../types";
+import type {
+  BulkCreateFlashcardsResponse,
+  FlashcardCreateResponse,
+  FlashcardListQuery,
+  FlashcardListResponse,
+  SourceEnum,
+} from "../../types";
 
 /**
  * Zod validation schema for POST /api/flashcards.
@@ -53,6 +59,36 @@ export const bulkCreateFlashcardsSchema = z.object({
 });
 
 export type BulkCreateFlashcardsInput = z.infer<typeof bulkCreateFlashcardsSchema>;
+
+/**
+ * Zod validation schema for GET /api/flashcards.
+ */
+export const listFlashcardsSchema = z.object({
+  page: z.coerce
+    .number({ invalid_type_error: "page must be a number" })
+    .int("page must be an integer")
+    .min(1, "page must be at least 1")
+    .default(1),
+  pageSize: z.coerce
+    .number({ invalid_type_error: "pageSize must be a number" })
+    .int("pageSize must be an integer")
+    .min(1, "pageSize must be at least 1")
+    .max(100, "pageSize must be at most 100")
+    .default(24),
+  source: z
+    .enum(sourceEnumValues, {
+      errorMap: () => ({ message: 'source must be one of "ai_generated", "ai_edited", "manual"' }),
+    })
+    .optional(),
+  generationId: z.string().uuid({ message: "generationId must be a valid UUID" }).optional(),
+  sort: z
+    .enum(["created_at desc", "created_at asc"], {
+      errorMap: () => ({ message: 'sort must be "created_at desc" or "created_at asc"' }),
+    })
+    .default("created_at desc"),
+});
+
+export type ListFlashcardsInput = z.infer<typeof listFlashcardsSchema>;
 
 export interface CreateFlashcardParams {
   supabase: SupabaseClient;
@@ -205,6 +241,68 @@ export async function bulkCreateFlashcards({
   const result: BulkCreateFlashcardsResponse = {
     created: inserted.length,
     ids: inserted.map((row) => row.id),
+  };
+
+  return { result };
+}
+
+export interface ListFlashcardsParams {
+  supabase: SupabaseClient;
+  query: FlashcardListQuery;
+  userId?: string;
+}
+
+export interface ListFlashcardsResult {
+  result: FlashcardListResponse;
+}
+
+/**
+ * List flashcards for a user with optional filters and pagination.
+ */
+export async function listFlashcards({
+  supabase,
+  query,
+  userId = TEST_USER_ID,
+}: ListFlashcardsParams): Promise<ListFlashcardsResult> {
+  if (!supabase) {
+    throw new Error("Supabase client is required");
+  }
+
+  const parsed = listFlashcardsSchema.parse(query);
+
+  const offset = (parsed.page - 1) * parsed.pageSize;
+  const ascending = parsed.sort === "created_at asc";
+
+  let builder = supabase.from("flashcards").select("*", { count: "exact" }).eq("user_id", userId);
+
+  if (parsed.source) {
+    builder = builder.eq("source", parsed.source);
+  }
+
+  const { data, error, count } = await builder
+    .order("created_at", { ascending })
+    .range(offset, offset + parsed.pageSize - 1);
+
+  if (error) {
+    throw new Error(`Failed to list flashcards: ${error.message}`);
+  }
+
+  const items =
+    data?.map((row) => ({
+      id: row.id,
+      front: row.front,
+      back: row.back,
+      source: row.source,
+      generationId: row.generation_id,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    })) ?? [];
+
+  const result: FlashcardListResponse = {
+    items,
+    page: parsed.page,
+    pageSize: parsed.pageSize,
+    total: count ?? 0,
   };
 
   return { result };

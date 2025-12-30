@@ -1,6 +1,12 @@
 import type { APIRoute } from "astro";
 
-import { createFlashcard, createFlashcardSchema, NotFoundError } from "../../lib/services/flashcards.ts";
+import {
+  createFlashcard,
+  createFlashcardSchema,
+  listFlashcards,
+  listFlashcardsSchema,
+  NotFoundError,
+} from "../../lib/services/flashcards.ts";
 
 export const prerender = false;
 
@@ -50,6 +56,50 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // eslint-disable-next-line no-console
     console.error("createFlashcard failed", { error });
+    return new Response(JSON.stringify({ error: "Internal Server Error" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+};
+
+export const GET: APIRoute = async ({ request, locals }) => {
+  if (!locals?.supabase) {
+    return new Response(JSON.stringify({ error: "Supabase client not available" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  const url = new URL(request.url);
+  const parsed = listFlashcardsSchema.safeParse({
+    page: url.searchParams.get("page") ?? undefined,
+    pageSize: url.searchParams.get("pageSize") ?? undefined,
+    source: url.searchParams.get("source") ?? undefined,
+    generationId: url.searchParams.get("generationId") ?? undefined,
+    sort: url.searchParams.get("sort") ?? undefined,
+  });
+
+  if (!parsed.success) {
+    return new Response(JSON.stringify({ error: "Validation error", details: parsed.error.flatten() }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  try {
+    const { result } = await listFlashcards({
+      supabase: locals.supabase,
+      query: parsed.data,
+    });
+
+    return new Response(JSON.stringify(result), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error("listFlashcards failed", { error });
     return new Response(JSON.stringify({ error: "Internal Server Error" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
