@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { TEST_USER_ID, type SupabaseClient } from "../../db/supabase.client.ts";
-import type { FlashcardCreateResponse, SourceEnum } from "../../types";
+import type { BulkCreateFlashcardsResponse, FlashcardCreateResponse, SourceEnum } from "../../types";
 
 /**
  * Zod validation schema for POST /api/flashcards.
@@ -35,6 +35,24 @@ export const createFlashcardSchema = z.object({
 });
 
 export type CreateFlashcardInput = z.infer<typeof createFlashcardSchema>;
+
+/**
+ * Zod validation schema for POST /api/flashcards/bulk.
+ */
+export const bulkCreateFlashcardsSchema = z.object({
+  generationId: z
+    .string()
+    .uuid({ message: "generationId must be a valid UUID" })
+    .optional()
+    .nullable()
+    .transform((value) => value ?? null),
+  flashcards: z
+    .array(createFlashcardSchema.omit({ generationId: true }))
+    .min(1, "flashcards must contain between 1 and 50 items")
+    .max(50, "flashcards must contain between 1 and 50 items"),
+});
+
+export type BulkCreateFlashcardsInput = z.infer<typeof bulkCreateFlashcardsSchema>;
 
 export interface CreateFlashcardParams {
   supabase: SupabaseClient;
@@ -119,4 +137,75 @@ export async function createFlashcard({
   };
 
   return { flashcard };
+}
+
+export interface BulkCreateFlashcardsParams {
+  supabase: SupabaseClient;
+  payload: BulkCreateFlashcardsInput;
+  userId?: string;
+}
+
+export interface BulkCreateFlashcardsResult {
+  result: BulkCreateFlashcardsResponse;
+}
+
+/**
+ * Insert multiple flashcards in a single batch and optionally link them to a generation.
+ */
+export async function bulkCreateFlashcards({
+  supabase,
+  payload,
+  userId = TEST_USER_ID,
+}: BulkCreateFlashcardsParams): Promise<BulkCreateFlashcardsResult> {
+  if (!supabase) {
+    throw new Error("Supabase client is required");
+  }
+
+  const parsed = bulkCreateFlashcardsSchema.parse(payload);
+
+  if (parsed.generationId) {
+    const { data, error } = await supabase
+      .from("generations")
+      .select("id")
+      .eq("id", parsed.generationId)
+      .eq("user_id", userId)
+      .single();
+
+    if (error?.code === "PGRST116") {
+      throw new NotFoundError("Generation not found");
+    }
+
+    if (error) {
+      throw new Error(`Failed to verify generation: ${error.message}`);
+    }
+
+    if (!data) {
+      throw new NotFoundError("Generation not found");
+    }
+  }
+
+  const records = parsed.flashcards.map((flashcard) => ({
+    user_id: userId,
+    generation_id: parsed.generationId,
+    front: flashcard.front,
+    back: flashcard.back,
+    source: flashcard.source,
+  }));
+
+  const { data: inserted, error: insertError } = await supabase.from("flashcards").insert(records).select("id");
+
+  if (insertError) {
+    throw new Error(`Failed to insert flashcards: ${insertError.message}`);
+  }
+
+  if (!inserted || inserted.length === 0) {
+    throw new Error("Flashcards insertion returned no data");
+  }
+
+  const result: BulkCreateFlashcardsResponse = {
+    created: inserted.length,
+    ids: inserted.map((row) => row.id),
+  };
+
+  return { result };
 }

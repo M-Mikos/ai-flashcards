@@ -42,6 +42,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
     });
   } catch (error) {
     const length = parsed.success ? parsed.data.text.length : undefined;
+
+    // eslint-disable-next-line no-console
     console.error("createGeneration failed", { hash: "redacted", length, error });
     return new Response(JSON.stringify({ error: "Internal Server Error" }), {
       status: 500,

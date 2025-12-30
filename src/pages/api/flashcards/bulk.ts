@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 
-import { createFlashcard, createFlashcardSchema, NotFoundError } from "../../lib/services/flashcards.ts";
+import { bulkCreateFlashcards, bulkCreateFlashcardsSchema, NotFoundError } from "../../../lib/services/flashcards.ts";
 
 export const prerender = false;
 
@@ -22,7 +22,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     });
   }
 
-  const parsed = createFlashcardSchema.safeParse(body);
+  const parsed = bulkCreateFlashcardsSchema.safeParse(body);
   if (!parsed.success) {
     return new Response(JSON.stringify({ error: "Validation error", details: parsed.error.flatten() }), {
       status: 400,
@@ -31,12 +31,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 
   try {
-    const { flashcard } = await createFlashcard({
+    const { result } = await bulkCreateFlashcards({
       supabase: locals.supabase,
       payload: parsed.data,
     });
 
-    return new Response(JSON.stringify(flashcard), {
+    return new Response(JSON.stringify(result), {
       status: 201,
       headers: { "Content-Type": "application/json" },
     });
@@ -49,7 +49,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     // eslint-disable-next-line no-console
-    console.error("createFlashcard failed", { error });
+    console.error("bulkCreateFlashcards failed", { error });
     return new Response(JSON.stringify({ error: "Internal Server Error" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
