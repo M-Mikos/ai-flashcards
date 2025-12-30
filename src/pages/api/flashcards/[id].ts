@@ -8,7 +8,6 @@ import {
   updateFlashcard,
   updateFlashcardSchema,
 } from "../../../lib/services/flashcards.ts";
-import type { SupabaseClient } from "../../../db/supabase.client.ts";
 
 export const prerender = false;
 
