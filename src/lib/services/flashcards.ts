@@ -4,15 +4,25 @@ import { TEST_USER_ID, type SupabaseClient } from "../../db/supabase.client.ts";
 import type {
   BulkCreateFlashcardsResponse,
   FlashcardCreateResponse,
+  FlashcardDetailResponse,
   FlashcardListQuery,
   FlashcardListResponse,
+  FlashcardUpdateResponse,
   SourceEnum,
+  UpdateFlashcardCommand,
 } from "../../types";
 
 /**
  * Zod validation schema for POST /api/flashcards.
  */
 const sourceEnumValues: readonly [SourceEnum, SourceEnum, SourceEnum] = ["ai_generated", "ai_edited", "manual"];
+
+/**
+ * Zod validation schema for path param id on /api/flashcards/:id.
+ */
+export const idParamSchema = z.object({
+  id: z.string().uuid({ message: "id must be a valid UUID" }),
+});
 
 export const createFlashcardSchema = z.object({
   front: z
@@ -59,6 +69,37 @@ export const bulkCreateFlashcardsSchema = z.object({
 });
 
 export type BulkCreateFlashcardsInput = z.infer<typeof bulkCreateFlashcardsSchema>;
+
+/**
+ * Zod validation schema for PATCH /api/flashcards/:id.
+ */
+export const updateFlashcardSchema = z
+  .object({
+    front: z
+      .string({
+        invalid_type_error: "front must be a string",
+      })
+      .min(1, "front must be between 1 and 200 characters")
+      .max(200, "front must be between 1 and 200 characters")
+      .optional(),
+    back: z
+      .string({
+        invalid_type_error: "back must be a string",
+      })
+      .min(1, "back must be between 1 and 500 characters")
+      .max(500, "back must be between 1 and 500 characters")
+      .optional(),
+    source: z
+      .enum(sourceEnumValues, {
+        errorMap: () => ({ message: 'source must be one of "ai_generated", "ai_edited", "manual"' }),
+      })
+      .optional(),
+  })
+  .refine((data) => data.front !== undefined || data.back !== undefined || data.source !== undefined, {
+    message: "At least one of front, back, or source must be provided",
+  });
+
+export type UpdateFlashcardInput = z.infer<typeof updateFlashcardSchema>;
 
 /**
  * Zod validation schema for GET /api/flashcards.
@@ -306,4 +347,194 @@ export async function listFlashcards({
   };
 
   return { result };
+}
+
+export interface GetFlashcardByIdParams {
+  supabase: SupabaseClient;
+  id: string;
+  userId?: string;
+}
+
+export interface GetFlashcardByIdResult {
+  flashcard: FlashcardDetailResponse;
+}
+
+/**
+ * Fetch a single flashcard owned by the user.
+ */
+export async function getFlashcardById({
+  supabase,
+  id,
+  userId = TEST_USER_ID,
+}: GetFlashcardByIdParams): Promise<GetFlashcardByIdResult> {
+  if (!supabase) {
+    throw new Error("Supabase client is required");
+  }
+
+  const { data, error } = await supabase.from("flashcards").select("*").eq("id", id).eq("user_id", userId).single();
+
+  if (error?.code === "PGRST116") {
+    throw new NotFoundError("Flashcard not found");
+  }
+
+  if (error) {
+    throw new Error(`Failed to fetch flashcard: ${error.message}`);
+  }
+
+  if (!data) {
+    throw new NotFoundError("Flashcard not found");
+  }
+
+  const flashcard: FlashcardDetailResponse = {
+    id: data.id,
+    front: data.front,
+    back: data.back,
+    source: data.source,
+    generationId: data.generation_id,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
+  };
+
+  return { flashcard };
+}
+
+export interface UpdateFlashcardParams {
+  supabase: SupabaseClient;
+  id: string;
+  payload: UpdateFlashcardCommand;
+  userId?: string;
+}
+
+export interface UpdateFlashcardResult {
+  flashcard: FlashcardUpdateResponse;
+}
+
+/**
+ * Partially update a flashcard. If front/back change and previous source was ai_generated,
+ * the source is upgraded to ai_edited unless the client explicitly sets manual.
+ */
+export async function updateFlashcard({
+  supabase,
+  id,
+  payload,
+  userId = TEST_USER_ID,
+}: UpdateFlashcardParams): Promise<UpdateFlashcardResult> {
+  if (!supabase) {
+    throw new Error("Supabase client is required");
+  }
+
+  const parsed = updateFlashcardSchema.parse(payload);
+
+  const { data: existing, error: fetchError } = await supabase
+    .from("flashcards")
+    .select("*")
+    .eq("id", id)
+    .eq("user_id", userId)
+    .single();
+
+  if (fetchError?.code === "PGRST116") {
+    throw new NotFoundError("Flashcard not found");
+  }
+
+  if (fetchError) {
+    throw new Error(`Failed to fetch flashcard: ${fetchError.message}`);
+  }
+
+  if (!existing) {
+    throw new NotFoundError("Flashcard not found");
+  }
+
+  const frontChanged = parsed.front !== undefined && parsed.front !== existing.front;
+  const backChanged = parsed.back !== undefined && parsed.back !== existing.back;
+
+  let nextSource: SourceEnum = existing.source;
+  if (parsed.source) {
+    nextSource = parsed.source;
+  } else if ((frontChanged || backChanged) && existing.source === "ai_generated") {
+    nextSource = "ai_edited";
+  }
+
+  const updates: Record<string, unknown> = {};
+  if (parsed.front !== undefined) updates.front = parsed.front;
+  if (parsed.back !== undefined) updates.back = parsed.back;
+  if (nextSource !== existing.source || parsed.source !== undefined) {
+    updates.source = nextSource;
+  }
+
+  const { data, error } = await supabase
+    .from("flashcards")
+    .update(updates)
+    .eq("id", id)
+    .eq("user_id", userId)
+    .select("*")
+    .single();
+
+  if (error?.code === "PGRST116") {
+    throw new NotFoundError("Flashcard not found");
+  }
+
+  if (error) {
+    throw new Error(`Failed to update flashcard: ${error.message}`);
+  }
+
+  if (!data) {
+    throw new Error("Flashcard update returned no data");
+  }
+
+  const flashcard: FlashcardUpdateResponse = {
+    id: data.id,
+    front: data.front,
+    back: data.back,
+    source: data.source,
+    generationId: data.generation_id,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
+  };
+
+  return { flashcard };
+}
+
+export interface DeleteFlashcardParams {
+  supabase: SupabaseClient;
+  id: string;
+  userId?: string;
+}
+
+export interface DeleteFlashcardResult {
+  id: string;
+}
+
+/**
+ * Delete a single flashcard owned by the user.
+ */
+export async function deleteFlashcard({
+  supabase,
+  id,
+  userId = TEST_USER_ID,
+}: DeleteFlashcardParams): Promise<DeleteFlashcardResult> {
+  if (!supabase) {
+    throw new Error("Supabase client is required");
+  }
+
+  const { data, error } = await supabase
+    .from("flashcards")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", userId)
+    .select("id")
+    .single();
+
+  if (error?.code === "PGRST116") {
+    throw new NotFoundError("Flashcard not found");
+  }
+
+  if (error) {
+    throw new Error(`Failed to delete flashcard: ${error.message}`);
+  }
+
+  if (!data?.id) {
+    throw new NotFoundError("Flashcard not found");
+  }
+
+  return { id: data.id };
 }
