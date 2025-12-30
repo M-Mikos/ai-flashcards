@@ -1,8 +1,8 @@
 ---
-import Welcome from "../components/Welcome.astro";
 import Layout from "../layouts/Layout.astro";
+import MyFlashcardsView from "../components/flashcards/MyFlashcardsView";
 ---
 
-<Layout>
-  <Welcome />
+<Layout title="Moje fiszki">
+  <MyFlashcardsView client:load />
 </Layout>
