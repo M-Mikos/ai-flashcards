@@ -60,11 +60,6 @@
   - Response: `{ "cards": [ { "id": uuid, "front": string } ] }`
   - Errors: 401.
 
-- POST `/api/learning/feedback`
-  - Desc: Send recall quality to spaced-repetition algorithm.
-  - Body: `{ "cardId": uuid, "grade": number, "timestamp": string }`
-  - Response: 200; errors: 400, 401, 404.
-
 ## 3. Validation and Business Logic
 
 - Input text length: 1000–10000 chars (DB check on `generations.input_length`); reject early with 400.
