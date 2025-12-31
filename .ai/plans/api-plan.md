@@ -71,6 +71,6 @@
 - Generation metrics: store `generation_time_ms > 0`, `generated_count >= 0`, `accepted_count >= 0`, `accepted_edited_count >= 0`; update counts on bulk save or individual accept.
 - Flashcard constraints: `front` 1–200 chars; `back` 1–500; `source` in enum `ai_generated|ai_edited|manual`; `generationId` nullable.
 - Ownership: all lookups scoped by `user_id`.
-- Pagination defaults: page 1, pageSize 20 (max 100); sorting defaults to `created_at desc`.
+- Pagination defaults: page 1, pageSize 24 (max 100); sorting defaults to `created_at desc`.
 - Bulk create cap: recommend max 50 items per request to limit payload size.
 - Error mapping: 400 for validation, 401 for missing/invalid token, 403 only for admin-locked ops, 404 for missing or not-owned resources, 429 for rate-limit, 500 for unexpected errors/AI provider failures.

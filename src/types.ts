@@ -48,6 +48,19 @@ export type GenerationCreateResponse = Pick<
   "id" | "hash" | "inputLength" | "generatedCount" | "createdAt"
 >;
 
+/**
+ * Flashcard proposal produced during generation.
+ */
+export type GeneratedFlashcard = Pick<FlashcardRow, "front" | "back" | "source">;
+
+/**
+ * Complete response for POST /api/generations including flashcard proposals.
+ */
+export interface GenerationCreateWithFlashcardsResponse {
+  generation: GenerationCreateResponse;
+  flashcards: GeneratedFlashcard[];
+}
+
 export interface GenerationListQuery {
   page?: number;
   pageSize?: number;

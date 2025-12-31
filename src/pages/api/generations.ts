@@ -31,12 +31,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 
   try {
-    const { generation } = await createGeneration({
+    const result = await createGeneration({
       supabase: locals.supabase,
       ...parsed.data,
     });
 
-    return new Response(JSON.stringify(generation), {
+    return new Response(JSON.stringify(result), {
       status: 201,
       headers: { "Content-Type": "application/json" },
     });

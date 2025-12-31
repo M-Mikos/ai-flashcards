@@ -2,7 +2,12 @@ import { createHash, randomUUID } from "node:crypto";
 import { z } from "zod";
 
 import { TEST_USER_ID, type SupabaseClient } from "../../db/supabase.client.ts";
-import type { CreateGenerationCommand, GenerationCreateResponse } from "../../types";
+import type {
+  CreateGenerationCommand,
+  GeneratedFlashcard,
+  GenerationCreateResponse,
+  GenerationCreateWithFlashcardsResponse,
+} from "../../types";
 
 /**
  * Zod validation schema for POST /api/generations.
@@ -27,16 +32,7 @@ export interface CreateGenerationParams extends CreateGenerationInput {
   userId?: string;
 }
 
-interface MockFlashcard {
-  front: string;
-  back: string;
-  source: "ai_generated";
-}
-
-export interface CreateGenerationResult {
-  generation: GenerationCreateResponse;
-  flashcards: MockFlashcard[];
-}
+export type CreateGenerationResult = GenerationCreateWithFlashcardsResponse;
 
 /**
  * Create a generation stub. Business logic and persistence will be added next.
@@ -53,7 +49,7 @@ export async function createGeneration({
 
   const validated = createGenerationSchema.parse({ text, model });
 
-  const mockFlashcards: MockFlashcard[] = [
+  const mockFlashcards: GeneratedFlashcard[] = [
     {
       front: "What is spaced repetition?",
       back: "A learning technique that schedules reviews to optimize memory.",

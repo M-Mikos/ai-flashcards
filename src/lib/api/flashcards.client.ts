@@ -1,4 +1,6 @@
 import type {
+  BulkCreateFlashcardsCommand,
+  BulkCreateFlashcardsResponse,
   CreateFlashcardCommand,
   FlashcardCreateResponse,
   FlashcardListQuery,
@@ -117,4 +119,19 @@ export async function deleteFlashcardClient({ id, signal }: DeleteFlashcardArgs)
   const response = await fetch(`/api/flashcards/${id}`, { method: "DELETE", signal });
   await handleResponse<unknown>(response);
   return id;
+}
+
+export interface BulkCreateFlashcardsArgs {
+  payload: BulkCreateFlashcardsCommand;
+  signal?: AbortSignal;
+}
+
+export async function bulkCreateFlashcardsClient({ payload, signal }: BulkCreateFlashcardsArgs) {
+  const response = await fetch("/api/flashcards/bulk", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    signal,
+  });
+  return handleResponse<BulkCreateFlashcardsResponse>(response);
 }
