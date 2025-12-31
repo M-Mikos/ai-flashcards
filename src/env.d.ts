@@ -15,6 +15,7 @@ interface ImportMetaEnv {
   readonly SUPABASE_KEY: string;
   readonly SUPABASE_SERVICE_ROLE_KEY: string;
   readonly OPENROUTER_API_KEY?: string;
+  readonly OPENROUTER_BASE_URL?: string;
 }
 
 interface ImportMeta {

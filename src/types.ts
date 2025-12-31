@@ -206,3 +206,66 @@ export interface ConfirmDialogProps {
 export interface LogoutState {
   isLoggingOut: boolean;
 }
+
+export type LlmRole = "system" | "user" | "assistant";
+
+export interface OpenRouterMessage {
+  role: LlmRole;
+  content: string;
+}
+
+export interface JsonSchemaFormat {
+  type: "json_schema";
+  json_schema: {
+    name: string;
+    schema: Record<string, unknown>;
+    strict?: boolean;
+    description?: string;
+  };
+}
+
+export type ResponseFormat = JsonSchemaFormat;
+
+export interface SendChatOptions {
+  model?: string;
+  temperature?: number;
+  max_tokens?: number;
+  response_format?: ResponseFormat;
+  abortSignal?: AbortSignal;
+}
+
+export interface OpenRouterConfig {
+  apiKey: string;
+  baseUrl: string;
+  timeoutMs: number;
+  maxRetries: number;
+  rateLimitQPS: number;
+  defaultModel: string;
+}
+
+export interface OpenRouterChoice {
+  index: number;
+  message: OpenRouterMessage;
+  finish_reason?: string | null;
+}
+
+export interface OpenRouterUsage {
+  prompt_tokens?: number;
+  completion_tokens?: number;
+  total_tokens?: number;
+}
+
+export interface OpenRouterReply {
+  id: string;
+  created: number;
+  model: string;
+  choices: OpenRouterChoice[];
+  usage?: OpenRouterUsage;
+}
+
+export interface ParsedReply {
+  raw: OpenRouterReply;
+  message: OpenRouterMessage;
+  content: string;
+  json?: unknown;
+}
