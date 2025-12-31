@@ -16,8 +16,27 @@ const { title = "10x Astro Starter" } = Astro.props;
     <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
+    <script>
+      (() => {
+        const STORAGE_KEY = "theme-mode";
+        const isValidMode = (value) => value === "light" || value === "dark" || value === "system";
+        let storedMode = null;
+        try {
+          storedMode = localStorage.getItem(STORAGE_KEY);
+        } catch {
+          storedMode = null;
+        }
+        const mode = isValidMode(storedMode) ? storedMode : "system";
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        const shouldUseDark = mode === "dark" || (mode === "system" && prefersDark);
+        const root = document.documentElement;
+        root.classList.toggle("dark", shouldUseDark);
+        root.setAttribute("data-theme", shouldUseDark ? "dark" : "light");
+        root.style.colorScheme = shouldUseDark ? "dark" : "light";
+      })();
+    </script>
   </head>
-  <body>
+  <body class="bg-background text-foreground">
     <slot />
   </body>
 </html>

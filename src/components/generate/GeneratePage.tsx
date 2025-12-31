@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 
 import { createGenerationClient } from "@/lib/api/generations.client";
 import { useGenerateState } from "../hooks/useGenerateState";
-import type { FlashcardProposal, GenerationStep } from "./types";
+import type { GenerationStep } from "./types";
 import { Step1Input } from "./Step1Input";
 import { Step2Proposals } from "./Step2Proposals";
 
@@ -36,10 +36,6 @@ export default function GeneratePage() {
     [setGenerationId, setProposals, setStep, setText]
   );
 
-  const handleBack = useCallback(() => {
-    setStep(1);
-  }, [setStep]);
-
   const handleReset = useCallback(() => {
     reset();
   }, [reset]);
@@ -72,7 +68,6 @@ export default function GeneratePage() {
               generationId={state.generationId ?? null}
               onUpdate={updateProposal}
               onSetProposals={setProposals}
-              onBack={handleBack}
               onReset={handleReset}
               onDone={() => {
                 setToast({ message: "Zapisano fiszki, wróć do listy", tone: "success" });

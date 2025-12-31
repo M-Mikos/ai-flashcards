@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import type { Enums, Tables } from "./db/database.types";
 
 /**
@@ -151,4 +153,38 @@ export interface LearningFeedbackCommand {
   cardId: FlashcardRow["id"];
   grade: number;
   timestamp: string;
+}
+
+export type ThemeMode = "light" | "dark" | "system";
+
+export interface ThemeState {
+  mode: ThemeMode;
+  isSystemPreferredDark: boolean;
+}
+
+export interface AccountViewModel {
+  email: string;
+  registeredAt: string;
+}
+
+export interface DeleteAccountState {
+  isOpen: boolean;
+  confirmationText: string;
+  isDeleting: boolean;
+}
+
+export interface ConfirmDialogProps {
+  open: boolean;
+  loading?: boolean;
+  confirmDisabled?: boolean;
+  children?: ReactNode;
+  title: string;
+  description?: string;
+  confirmLabel?: string;
+  onConfirm: () => void;
+  onOpenChange: (open: boolean) => void;
+}
+
+export interface LogoutState {
+  isLoggingOut: boolean;
 }

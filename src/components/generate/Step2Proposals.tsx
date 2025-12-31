@@ -12,7 +12,6 @@ interface Step2ProposalsProps {
   proposals: FlashcardProposal[];
   onUpdate: (id: string, patch: Partial<FlashcardProposal>) => void;
   onSetProposals: (next: FlashcardProposal[]) => void;
-  onBack: () => void;
   onDone: () => void;
   onReset: () => void;
 }
@@ -22,7 +21,6 @@ export function Step2Proposals({
   proposals,
   onUpdate,
   onSetProposals,
-  onBack,
   onDone,
   onReset,
 }: Step2ProposalsProps) {
