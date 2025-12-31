@@ -140,10 +140,28 @@ export interface LearningSessionCommand {
   generationId?: FlashcardRow["generation_id"];
 }
 
-export type LearningSessionCard = Pick<FlashcardDTO, "id" | "front">;
+export type LearningSessionCard = Pick<FlashcardDTO, "id" | "front" | "back">;
 
 export interface LearningSessionResponse {
   cards: LearningSessionCard[];
+}
+
+export type Grade = 0 | 1 | 2 | 3 | 4 | 5;
+
+export interface LearningCardVM extends LearningSessionCard {
+  flipped: boolean;
+  grade?: Grade;
+}
+
+export interface LearningSessionVM {
+  cards: LearningCardVM[];
+  currentIndex: number;
+  finished: boolean;
+}
+
+export interface SessionStats {
+  avgGrade: number;
+  total: number;
 }
 
 /**

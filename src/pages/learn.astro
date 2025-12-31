@@ -1,0 +1,10 @@
+---
+import Layout from "../layouts/Layout.astro";
+import LearningSession from "../components/learning/LearningSession";
+
+export const prerender = false;
+---
+
+<Layout title="Sesja nauki">
+  <LearningSession client:load />
+</Layout>

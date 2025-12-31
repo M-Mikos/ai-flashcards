@@ -46,7 +46,7 @@ export async function getLearningSession({
 
   const parsed = learningSessionSchema.parse(payload);
 
-  let builder = supabase.from("flashcards").select("id, front").eq("user_id", userId);
+  let builder = supabase.from("flashcards").select("id, front, back").eq("user_id", userId);
 
   if (parsed.source) {
     builder = builder.eq("source", parsed.source);
@@ -62,6 +62,7 @@ export async function getLearningSession({
     data?.map((row) => ({
       id: row.id,
       front: row.front,
+      back: row.back,
     })) ?? [];
 
   return { result: { cards } };
