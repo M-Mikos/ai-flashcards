@@ -4,12 +4,11 @@ import type { SessionStats } from "@/types";
 interface SummaryModalProps {
   open: boolean;
   stats: SessionStats;
-  onClose: () => void;
   onRestart: () => void;
   onDone: () => void;
 }
 
-export function SummaryModal({ open, stats, onClose, onRestart, onDone }: SummaryModalProps) {
+export function SummaryModal({ open, stats, onRestart, onDone }: SummaryModalProps) {
   if (!open) {
     return null;
   }

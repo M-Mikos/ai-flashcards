@@ -1,0 +1,133 @@
+---
+import { Home, Play, Sparkles, User } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+
+type IconName = "home" | "play" | "ai" | "user";
+
+interface NavItem {
+  label: string;
+  mobileLabel?: string;
+  href: string;
+  icon: IconName;
+}
+
+interface Props {
+  currentPath: string;
+}
+
+const navItems: NavItem[] = [
+  { label: "Moje fiszki", mobileLabel: "Fiszki", href: "/", icon: "home" },
+  { label: "Sesja nauki", mobileLabel: "Nauka", href: "/learn", icon: "play" },
+  { label: "Generuj", mobileLabel: "AI", href: "/generate", icon: "ai" },
+  { label: "Konto", mobileLabel: "Konto", href: "/account", icon: "user" },
+];
+
+const normalizedPath = (path: string) => {
+  if (!path) return "/";
+  if (path !== "/" && path.endsWith("/")) return path.slice(0, -1);
+  return path;
+};
+
+const props = Astro.props as Props;
+const currentPath = normalizedPath(props.currentPath ?? Astro.url.pathname);
+const isActive = (href: string) => normalizedPath(href) === currentPath;
+const navLabel = "Główna nawigacja";
+const logoutScript = `
+(() => {
+  const logoutButtons = document.querySelectorAll("[data-nav-logout]");
+  if (!logoutButtons.length) return;
+
+  const handleLogout = (event) => {
+    event.preventDefault();
+    try {
+      window.localStorage.clear();
+      document.cookie = "sb-access-token=; Max-Age=0; Path=/;";
+      document.cookie = "sb-refresh-token=; Max-Age=0; Path=/;";
+    } catch (error) {
+      console.error("Nie udało się wyczyścić stanu sesji", error);
+    } finally {
+      window.location.href = "/";
+    }
+  };
+
+  logoutButtons.forEach((button) => {
+    button.addEventListener("click", handleLogout);
+  });
+})();
+`;
+
+const icons: Record<IconName, LucideIcon> = {
+  home: Home,
+  play: Play,
+  ai: Sparkles,
+  user: User,
+};
+---
+
+<header
+  class="sticky top-0 z-40 hidden border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:block"
+>
+  <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+    <a class="flex items-center gap-2 text-base font-semibold text-foreground" href="/" aria-label="AI Flashcards">
+      <span class="inline-flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">AI</span>
+      <span class="hidden sm:inline">AI Flashcards</span>
+    </a>
+
+    <nav class="flex items-center gap-1" aria-label={navLabel} role="navigation">
+      {
+        navItems.map((item) => (
+          <a
+            class={`rounded-md px-3 py-2 text-sm font-medium transition hover:text-foreground ${
+              isActive(item.href)
+                ? "text-foreground underline decoration-2 underline-offset-[10px]"
+                : "text-muted-foreground"
+            }`}
+            href={item.href}
+            aria-current={isActive(item.href) ? "page" : undefined}
+          >
+            {item.label}
+          </a>
+        ))
+      }
+
+      <button
+        type="button"
+        class="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition hover:text-destructive"
+        data-nav-logout
+        aria-label="Wyloguj"
+      >
+        Logout
+      </button>
+    </nav>
+  </div>
+</header>
+
+<nav
+  class="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden"
+  aria-label={`${navLabel} (mobilna)`}
+  role="navigation"
+>
+  <ul class="grid grid-cols-4">
+    {
+      navItems.map((item) => (
+        <li>
+          <a
+            class={`flex flex-col items-center gap-1 px-1.5 py-2 text-xs font-medium transition ${
+              isActive(item.href) ? "text-primary" : "text-muted-foreground hover:text-foreground"
+            }`}
+            href={item.href}
+            aria-current={isActive(item.href) ? "page" : undefined}
+          >
+            {(() => {
+              const Icon = icons[item.icon];
+              return <Icon className="size-5" aria-hidden="true" />;
+            })()}
+            <span>{item.mobileLabel ?? item.label}</span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</nav>
+
+<script is:inline set:html={logoutScript} />

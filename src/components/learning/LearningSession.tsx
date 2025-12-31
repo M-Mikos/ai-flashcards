@@ -102,13 +102,7 @@ export default function LearningSession() {
 
       <HotkeyHandler onFlip={flip} onScore={handleScore} disabled={loading || showSummary || !hasCards} />
 
-      <SummaryModal
-        open={showSummary}
-        stats={stats}
-        onClose={() => setShowSummary(false)}
-        onRestart={handleRestart}
-        onDone={handleDone}
-      />
+      <SummaryModal open={showSummary} stats={stats} onRestart={handleRestart} onDone={handleDone} />
     </div>
   );
 }
