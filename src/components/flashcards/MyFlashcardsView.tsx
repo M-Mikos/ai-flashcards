@@ -587,7 +587,12 @@ function Dialog({ title, children, onClose }: { title: string; children: React.R
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-lg rounded-xl border bg-card p-5 shadow-lg">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        className="w-full max-w-lg rounded-xl border bg-card p-5 shadow-lg"
+      >
         <div className="mb-4 flex items-start justify-between gap-2">
           <div>
             <p className="text-sm text-muted-foreground">Formularz</p>
