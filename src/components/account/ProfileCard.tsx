@@ -7,18 +7,6 @@ interface ProfileCardProps {
 }
 
 export function ProfileCard({ account }: ProfileCardProps) {
-  const formattedDate = useMemo(() => {
-    const parsedDate = new Date(account.registeredAt);
-    if (Number.isNaN(parsedDate.getTime())) {
-      return "Nieznana data";
-    }
-    return parsedDate.toLocaleString("pl-PL", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  }, [account.registeredAt]);
-
   return (
     <section className="rounded-2xl border bg-card p-6 shadow-sm" aria-labelledby="account-profile-title">
       <div className="flex items-start justify-between gap-3">
@@ -31,14 +19,10 @@ export function ProfileCard({ account }: ProfileCardProps) {
         </div>
       </div>
 
-      <dl className="mt-6 grid gap-4 sm:grid-cols-2">
+      <dl className="mt-6">
         <div className="rounded-xl border bg-background px-4 py-3">
           <dt className="text-sm text-muted-foreground">E-mail</dt>
           <dd className="text-base font-medium text-foreground">{account.email}</dd>
-        </div>
-        <div className="rounded-xl border bg-background px-4 py-3">
-          <dt className="text-sm text-muted-foreground">Data rejestracji</dt>
-          <dd className="text-base font-medium text-foreground">{formattedDate}</dd>
         </div>
       </dl>
     </section>

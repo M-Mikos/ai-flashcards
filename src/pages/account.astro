@@ -1,8 +1,10 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import AccountPage from "../components/account/AccountPage";
+
+const user = Astro.locals.user ?? null;
 ---
 
 <Layout title="Twoje konto">
-  <AccountPage client:load />
+  <AccountPage client:load user={user} />
 </Layout>

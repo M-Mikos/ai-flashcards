@@ -15,25 +15,30 @@ interface ToastState {
   tone: ToastTone;
 }
 
-const MOCK_ACCOUNT: AccountViewModel = {
-  email: "uzytkownik@example.com",
-  registeredAt: "2024-01-15T12:00:00Z",
-};
+interface User {
+  id: string;
+  email: string | null;
+}
+
+interface AccountPageProps {
+  user?: User | null;
+}
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export default function AccountPage() {
-  const [account] = useState<AccountViewModel>(MOCK_ACCOUNT);
+export default function AccountPage({ user }: AccountPageProps) {
+  const account: AccountViewModel = useMemo(
+    () => ({
+      email: user?.email ?? "Brak e-maila",
+    }),
+    [user?.email]
+  );
   const { mode, setMode, effectiveMode, isSystemPreferredDark } = useThemeMode();
   const [toast, setToast] = useState<ToastState | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const headerSubtitle = useMemo(
-    () =>
-      "Zarządzaj ustawieniami konta, motywem i działaniami krytycznymi. Ten widok jest makietą bez realnych wywołań sieciowych.",
-    []
-  );
+  const headerSubtitle = useMemo(() => "Zarządzaj ustawieniami konta, motywem i działaniami krytycznymi.", []);
 
   const showToast = useCallback((message: string, tone: ToastTone) => setToast({ message, tone }), []);
 

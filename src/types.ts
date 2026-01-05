@@ -182,7 +182,6 @@ export interface ThemeState {
 
 export interface AccountViewModel {
   email: string;
-  registeredAt: string;
 }
 
 export interface DeleteAccountState {
