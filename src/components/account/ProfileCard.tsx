@@ -1,5 +1,3 @@
-import { useMemo } from "react";
-
 import type { AccountViewModel } from "@/types";
 
 interface ProfileCardProps {
