@@ -2,16 +2,14 @@
 import AuthLayout from "@/layouts/AuthLayout.astro";
 import { ResetConfirmForm } from "@/components/auth/ResetConfirmForm";
 
-const token = Astro.url.searchParams.get("access_token") ?? Astro.url.searchParams.get("code");
+export const prerender = false;
 
-const handleConfirmReset = async (values: { password: string; confirmPassword: string; token?: string | null }) => {
-  console.log("Reset confirm payload:", values);
-};
+const token = Astro.url.searchParams.get("access_token") ?? Astro.url.searchParams.get("code");
 ---
 
 <AuthLayout title="Potwierdź reset" heading="Nowe hasło">
   <div class="grid gap-6 lg:grid-cols-[1fr_minmax(0,0.45fr)]">
-    <ResetConfirmForm client:load token={token} onSubmit={handleConfirmReset} />
+    <ResetConfirmForm client:load token={token} />
     <div
       class="hidden flex-col gap-3 rounded-2xl border border-border bg-card/80 p-5 text-sm text-muted-foreground shadow-lg shadow-black/5 dark:shadow-black/40 sm:flex"
     >

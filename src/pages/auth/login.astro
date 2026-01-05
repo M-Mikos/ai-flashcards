@@ -1,12 +1,24 @@
 ---
+import { createSupabaseServerInstance } from "@/db/supabase.client";
 import AuthLayout from "@/layouts/AuthLayout.astro";
 import { LoginForm } from "@/components/auth/LoginForm";
 
-const handleLogin = async (values: { email: string; password: string }) => {
-  console.log("Login form payload:", values);
-};
+export const prerender = false;
+
+const supabase = createSupabaseServerInstance({
+  headers: Astro.request.headers,
+  cookies: Astro.cookies,
+});
+
+const {
+  data: { user },
+} = await supabase.auth.getUser();
+
+if (user) {
+  return Astro.redirect("/");
+}
 ---
 
 <AuthLayout title="Logowanie" heading="Witaj ponownie">
-  <LoginForm client:load onSubmit={handleLogin} />
+  <LoginForm client:load />
 </AuthLayout>

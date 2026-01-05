@@ -21,7 +21,7 @@ interface ResetConfirmFormProps {
   onSubmit?: (values: ResetConfirmFormValues & { token?: string | null }) => Promise<void>;
 }
 
-export function ResetConfirmForm({ token, onSubmit = async () => {} }: ResetConfirmFormProps) {
+export function ResetConfirmForm({ token, onSubmit }: ResetConfirmFormProps) {
   const [formValues, setFormValues] = useState<ResetConfirmFormValues>({
     password: "",
     confirmPassword: "",
@@ -30,6 +30,22 @@ export function ResetConfirmForm({ token, onSubmit = async () => {} }: ResetConf
   const [status, setStatus] = useState<ConfirmStatus | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const baseId = useId();
+  const isTokenMissing = !token;
+
+  const defaultSubmit = useCallback(async (values: ResetConfirmFormValues & { token?: string | null }) => {
+    const response = await fetch("/api/auth/reset/confirm", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(values),
+    });
+
+    const payload = await response.json().catch(() => null);
+    if (!response.ok) {
+      const fallbackMessage = "Nie udało się zresetować hasła. Spróbuj ponownie.";
+      const message = typeof payload?.error === "string" ? payload.error : fallbackMessage;
+      throw new Error(message);
+    }
+  }, []);
 
   const handleChange = useCallback((field: keyof ResetConfirmFormValues, value: string) => {
     setFormValues((prev) => ({ ...prev, [field]: value }));
@@ -41,6 +57,14 @@ export function ResetConfirmForm({ token, onSubmit = async () => {} }: ResetConf
     async (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       setStatus(null);
+      if (isTokenMissing) {
+        setStatus({
+          type: "error",
+          message: "Brak tokenu resetu. Użyj linku z wiadomości email lub poproś o nowy.",
+        });
+        return;
+      }
+
       const parsed = resetConfirmSchema.safeParse(formValues);
       if (!parsed.success) {
         const fieldErrors = Object.entries(parsed.error.formErrors.fieldErrors).reduce(
@@ -59,11 +83,14 @@ export function ResetConfirmForm({ token, onSubmit = async () => {} }: ResetConf
       setErrors({});
       setIsSubmitting(true);
       try {
-        await onSubmit({ ...parsed.data, token });
+        await (onSubmit ?? defaultSubmit)({ ...parsed.data, token });
         setStatus({
           type: "success",
-          message: "Hasło zostało zaktualizowane. Wkrótce dodamy przekierowanie do logowania.",
+          message: "Hasło zostało zaktualizowane. Przekierowuję do logowania.",
         });
+        setTimeout(() => {
+          window.location.href = "/auth/login";
+        }, 1200);
       } catch (error) {
         setStatus({
           type: "error",
@@ -73,7 +100,7 @@ export function ResetConfirmForm({ token, onSubmit = async () => {} }: ResetConf
         setIsSubmitting(false);
       }
     },
-    [formValues, onSubmit, token]
+    [defaultSubmit, formValues, isTokenMissing, onSubmit, token]
   );
 
   const statusClasses = useMemo(() => {
@@ -89,10 +116,10 @@ export function ResetConfirmForm({ token, onSubmit = async () => {} }: ResetConf
       description="Podaj nowe, silne hasło. Token z linku resetującego został automatycznie rozpoznany."
     >
       <div className="space-y-4">
-        {token ? (
-          <p className="text-xs text-muted-foreground">
-            Token: <span className="font-mono text-foreground">{token}</span>
-          </p>
+        {!token ? (
+          <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+            Nie znaleziono tokenu resetu. Użyj linku z wiadomości email, aby ustawić nowe hasło.
+          </div>
         ) : null}
 
         {status ? (
@@ -137,7 +164,7 @@ export function ResetConfirmForm({ token, onSubmit = async () => {} }: ResetConf
             />
           </FormField>
           <div className="flex justify-end">
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting || isTokenMissing}>
               {isSubmitting ? "Aktualizuję..." : "Zapisz nowe hasło"}
             </Button>
           </div>

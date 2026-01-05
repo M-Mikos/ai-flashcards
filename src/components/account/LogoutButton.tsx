@@ -15,7 +15,7 @@ export function LogoutButton({ onLogout, isLoggingOut }: LogoutButtonProps) {
             Wyloguj się
           </h2>
           <p className="text-sm text-muted-foreground">
-            Wylogowanie wyczyści lokalne dane sesji (mock) i wróci do ekranu głównego.
+            Wylogowanie wyczyści lokalne dane sesji i wróci do ekranu głównego.
           </p>
         </div>
         <Button variant="outline" onClick={onLogout} disabled={isLoggingOut} aria-busy={isLoggingOut}>

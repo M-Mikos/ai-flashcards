@@ -49,10 +49,7 @@ const themeBootScript = `
             {heading ?? title}
           </h1>
           <p class="text-sm text-muted-foreground sm:text-base">
-            {
-              description ??
-                "Zadbaj o bezpieczeństwo konta, szybkie logowanie oraz odświeżanie hasła w aplikacji do nauki fiszek."
-            }
+            {description ?? "Aplikacja do nauki fiszek."}
           </p>
         </header>
         <section class="grid gap-6 justify-center"><slot /></section>

@@ -6,6 +6,10 @@ declare global {
   namespace App {
     interface Locals {
       supabase: SupabaseClient;
+      user?: {
+        id: string;
+        email: string | null;
+      };
     }
   }
 }
@@ -16,6 +20,7 @@ interface ImportMetaEnv {
   readonly SUPABASE_SERVICE_ROLE_KEY: string;
   readonly OPENROUTER_API_KEY?: string;
   readonly OPENROUTER_BASE_URL?: string;
+  readonly PUBLIC_APP_URL?: string;
 }
 
 interface ImportMeta {

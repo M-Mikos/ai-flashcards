@@ -1,12 +1,24 @@
 ---
+import { createSupabaseServerInstance } from "@/db/supabase.client";
 import AuthLayout from "@/layouts/AuthLayout.astro";
 import { RegisterForm } from "@/components/auth/RegisterForm";
 
-const handleRegister = async (values: { email: string; password: string; confirmPassword: string }) => {
-  console.log("Register form payload:", values);
-};
+export const prerender = false;
+
+const supabase = createSupabaseServerInstance({
+  headers: Astro.request.headers,
+  cookies: Astro.cookies,
+});
+
+const {
+  data: { user },
+} = await supabase.auth.getUser();
+
+if (user) {
+  return Astro.redirect("/");
+}
 ---
 
 <AuthLayout title="Rejestracja" heading="Zacznij tworzyć fiszki">
-  <RegisterForm client:load onSubmit={handleRegister} />
+  <RegisterForm client:load />
 </AuthLayout>

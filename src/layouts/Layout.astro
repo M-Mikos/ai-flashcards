@@ -6,8 +6,10 @@ interface Props {
   title?: string;
 }
 
-const { title = "AI Flashcards" } = Astro.props;
+const props = Astro.props as Props;
+const title = props.title ?? "AI Flashcards";
 const currentPath = Astro.url.pathname;
+const user = Astro.locals.user ?? null;
 const themeBootScript = `
 (() => {
   const STORAGE_KEY = "theme-mode";
@@ -27,6 +29,62 @@ const themeBootScript = `
   root.style.colorScheme = shouldUseDark ? "dark" : "light";
 })();
 `;
+const toastScript = `
+(() => {
+  const container = document.getElementById("site-toast-root");
+  if (!container) return;
+
+  const classes = {
+    success: "border-emerald-200/80 bg-emerald-50 text-emerald-900",
+    error: "border-destructive/40 bg-destructive/10 text-destructive",
+  };
+
+  let currentToast = null;
+  let hideTimeout = 0;
+
+  const removeToast = () => {
+    if (currentToast && container.contains(currentToast)) {
+      container.removeChild(currentToast);
+    }
+    currentToast = null;
+    clearTimeout(hideTimeout);
+  };
+
+  const showToast = (message, tone = "success") => {
+    removeToast();
+    if (!message) {
+      return;
+    }
+
+    const toast = document.createElement("div");
+    toast.setAttribute("role", "status");
+    toast.className =
+      "pointer-events-auto flex items-center gap-3 rounded-lg border px-4 py-3 text-sm shadow-md backdrop-blur-sm " +
+      (classes[tone] ?? classes.success);
+
+    const content = document.createElement("span");
+    content.textContent = message;
+
+    const closeButton = document.createElement("button");
+    closeButton.type = "button";
+    closeButton.className = "text-sm font-medium text-foreground/80 transition hover:text-foreground";
+    closeButton.setAttribute("aria-label", "Zamknij powiadomienie");
+    closeButton.textContent = "✕";
+    closeButton.addEventListener("click", removeToast);
+
+    toast.appendChild(content);
+    toast.appendChild(closeButton);
+    container.appendChild(toast);
+    currentToast = toast;
+    hideTimeout = window.setTimeout(removeToast, 4000);
+  };
+
+  window.addEventListener("aiFlashcards:toast", (event) => {
+    const detail = event.detail ?? {};
+    showToast(detail.message ?? "", detail.tone ?? "success");
+  });
+})();
+`;
 ---
 
 <!doctype html>
@@ -41,11 +99,18 @@ const themeBootScript = `
   </head>
   <body class="bg-background text-foreground">
     <div class="flex min-h-screen flex-col">
-      <SiteNavigation currentPath={currentPath} />
+      <SiteNavigation currentPath={currentPath} user={user} />
       <div class="flex-1 pb-16 md:pb-0">
         <slot />
       </div>
     </div>
+    <div
+      id="site-toast-root"
+      aria-live="polite"
+      class="pointer-events-none fixed inset-x-0 top-4 z-50 flex justify-center px-4 sm:top-6"
+    >
+    </div>
+    <script is:inline set:html={toastScript} />
   </body>
 </html>
 

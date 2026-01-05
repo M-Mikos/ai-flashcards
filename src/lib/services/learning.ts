@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { TEST_USER_ID, type SupabaseClient } from "../../db/supabase.client.ts";
+import type { SupabaseClient } from "../../db/supabase.client.ts";
 import type { LearningSessionResponse, SourceEnum } from "../../types";
 
 const sourceEnumValues: readonly [SourceEnum, SourceEnum, SourceEnum] = ["ai_generated", "ai_edited", "manual"];
@@ -24,7 +24,7 @@ export type LearningSessionInput = z.infer<typeof learningSessionSchema>;
 export interface GetLearningSessionParams {
   supabase: SupabaseClient;
   payload: LearningSessionInput;
-  userId?: string;
+  userId: string;
 }
 
 export interface GetLearningSessionResult {
@@ -38,10 +38,13 @@ export interface GetLearningSessionResult {
 export async function getLearningSession({
   supabase,
   payload,
-  userId = TEST_USER_ID,
+  userId,
 }: GetLearningSessionParams): Promise<GetLearningSessionResult> {
   if (!supabase) {
     throw new Error("Supabase client is required");
+  }
+  if (!userId) {
+    throw new Error("User ID is required");
   }
 
   const parsed = learningSessionSchema.parse(payload);

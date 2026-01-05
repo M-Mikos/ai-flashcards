@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { z } from "zod";
 
-import { TEST_USER_ID, type SupabaseClient } from "../../db/supabase.client.ts";
+import type { SupabaseClient } from "../../db/supabase.client.ts";
 import { openRouter } from "./openrouter";
 import type {
   CreateGenerationCommand,
@@ -32,7 +32,7 @@ export type CreateGenerationInput = CreateGenerationCommand;
 
 export interface CreateGenerationParams extends CreateGenerationInput {
   supabase: SupabaseClient;
-  userId?: string;
+  userId: string;
 }
 
 export type CreateGenerationResult = GenerationCreateWithFlashcardsResponse;
@@ -42,12 +42,15 @@ export type CreateGenerationResult = GenerationCreateWithFlashcardsResponse;
  */
 export async function createGeneration({
   supabase,
-  userId = TEST_USER_ID,
+  userId,
   text,
   model,
 }: CreateGenerationParams): Promise<CreateGenerationResult> {
   if (!supabase) {
     throw new Error("Supabase client is required");
+  }
+  if (!userId) {
+    throw new Error("User ID is required");
   }
 
   const validated = createGenerationSchema.parse({ text, model });

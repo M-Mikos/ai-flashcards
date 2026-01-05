@@ -19,6 +19,12 @@ const supabaseMissingResponse = () =>
     headers: jsonHeaders,
   });
 
+const unauthorizedResponse = () =>
+  new Response(JSON.stringify({ error: "User not authenticated" }), {
+    status: 401,
+    headers: jsonHeaders,
+  });
+
 function validateIdParam(params: Record<string, string | undefined>) {
   const parsed = idParamSchema.safeParse({ id: params.id });
   if (!parsed.success) {
@@ -38,6 +44,11 @@ export const GET: APIRoute = async ({ params, locals }) => {
     return supabaseMissingResponse();
   }
 
+  const userId = locals.user?.id;
+  if (!userId) {
+    return unauthorizedResponse();
+  }
+
   const { id, error: idError } = validateIdParam(params);
   if (idError) {
     return idError;
@@ -47,6 +58,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
     const { flashcard } = await getFlashcardById({
       supabase: locals.supabase,
       id,
+      userId,
     });
 
     return new Response(JSON.stringify(flashcard), {
@@ -73,6 +85,11 @@ export const GET: APIRoute = async ({ params, locals }) => {
 export const PATCH: APIRoute = async ({ request, params, locals }) => {
   if (!locals?.supabase) {
     return supabaseMissingResponse();
+  }
+
+  const userId = locals.user?.id;
+  if (!userId) {
+    return unauthorizedResponse();
   }
 
   const { id, error: idError } = validateIdParam(params);
@@ -103,6 +120,7 @@ export const PATCH: APIRoute = async ({ request, params, locals }) => {
       supabase: locals.supabase,
       id,
       payload: parsedBody.data,
+      userId,
     });
 
     return new Response(JSON.stringify(flashcard), {
@@ -131,6 +149,11 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
     return supabaseMissingResponse();
   }
 
+  const userId = locals.user?.id;
+  if (!userId) {
+    return unauthorizedResponse();
+  }
+
   const { id, error: idError } = validateIdParam(params);
   if (idError) {
     return idError;
@@ -140,6 +163,7 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
     await deleteFlashcard({
       supabase: locals.supabase,
       id,
+      userId,
     });
 
     return new Response(null, {

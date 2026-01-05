@@ -3,6 +3,7 @@ import { Home, Play, Sparkles, User } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 type IconName = "home" | "play" | "ai" | "user";
+type UserInfo = { id: string; email: string | null } | null;
 
 interface NavItem {
   label: string;
@@ -13,6 +14,7 @@ interface NavItem {
 
 interface Props {
   currentPath: string;
+  user?: UserInfo;
 }
 
 const navItems: NavItem[] = [
@@ -30,23 +32,51 @@ const normalizedPath = (path: string) => {
 
 const props = Astro.props as Props;
 const currentPath = normalizedPath(props.currentPath ?? Astro.url.pathname);
+const user = props.user ?? null;
+const isAuthenticated = Boolean(user);
+const userEmail = user?.email ?? "Brak e-maila";
 const isActive = (href: string) => normalizedPath(href) === currentPath;
 const navLabel = "Główna nawigacja";
-const logoutScript = `
+const logoutScript = isAuthenticated
+  ? `
 (() => {
   const logoutButtons = document.querySelectorAll("[data-nav-logout]");
   if (!logoutButtons.length) return;
 
-  const handleLogout = (event) => {
+  const showToast = (message, tone = "success") => {
+    window.dispatchEvent(
+      new CustomEvent("aiFlashcards:toast", {
+        detail: { message, tone },
+      })
+    );
+  };
+
+  const handleLogout = async (event) => {
     event.preventDefault();
+    const target = event.currentTarget;
+    target.setAttribute("aria-busy", "true");
+    target.disabled = true;
+
     try {
-      window.localStorage.clear();
-      document.cookie = "sb-access-token=; Max-Age=0; Path=/;";
-      document.cookie = "sb-refresh-token=; Max-Age=0; Path=/;";
+      const response = await fetch("/api/auth/logout", { method: "POST" });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        const message = payload?.error ?? "Nie udało się wylogować";
+        throw new Error(message);
+      }
+
+      showToast("Wylogowano", "success");
+      setTimeout(() => {
+        window.location.href = "/auth/login";
+      }, 800);
     } catch (error) {
-      console.error("Nie udało się wyczyścić stanu sesji", error);
-    } finally {
-      window.location.href = "/";
+      showToast(
+        error instanceof Error ? error.message : "Nie udało się wylogować",
+        "error"
+      );
+      console.error("Nie udało się wylogować", error);
+      target.disabled = false;
+      target.removeAttribute("aria-busy");
     }
   };
 
@@ -54,7 +84,8 @@ const logoutScript = `
     button.addEventListener("click", handleLogout);
   });
 })();
-`;
+`
+  : null;
 
 const icons: Record<IconName, LucideIcon> = {
   home: Home,
@@ -90,14 +121,23 @@ const icons: Record<IconName, LucideIcon> = {
         ))
       }
 
-      <button
-        type="button"
-        class="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition hover:text-destructive"
-        data-nav-logout
-        aria-label="Wyloguj"
-      >
-        Logout
-      </button>
+      {
+        isAuthenticated ? (
+          <div class="ml-2 flex items-center gap-2 border-l pl-3 text-sm">
+            <span class="text-xs text-muted-foreground" aria-label={`Zalogowano jako ${userEmail}`}>
+              {userEmail}
+            </span>
+            <button
+              type="button"
+              class="rounded-md px-3 py-2 font-medium text-muted-foreground transition hover:text-destructive"
+              data-nav-logout
+              aria-label="Wyloguj"
+            >
+              Logout
+            </button>
+          </div>
+        ) : null
+      }
     </nav>
   </div>
 </header>
@@ -107,7 +147,7 @@ const icons: Record<IconName, LucideIcon> = {
   aria-label={`${navLabel} (mobilna)`}
   role="navigation"
 >
-  <ul class="grid grid-cols-4">
+  <ul class={`grid ${isAuthenticated ? "grid-cols-5" : "grid-cols-4"}`}>
     {
       navItems.map((item) => (
         <li>
@@ -127,7 +167,27 @@ const icons: Record<IconName, LucideIcon> = {
         </li>
       ))
     }
+    {
+      isAuthenticated ? (
+        <li>
+          <div class="flex flex-col items-center gap-0.5 px-1.5 py-2 text-center">
+            <span class="text-[10px] font-medium text-muted-foreground" aria-label={`Zalogowano jako ${userEmail}`}>
+              {userEmail}
+            </span>
+            <button
+              type="button"
+              class="flex flex-col items-center gap-1 text-xs font-medium text-muted-foreground transition hover:text-destructive"
+              data-nav-logout
+              aria-label="Wyloguj"
+            >
+              <span aria-hidden="true">⎋</span>
+              <span>Wyloguj</span>
+            </button>
+          </div>
+        </li>
+      ) : null
+    }
   </ul>
 </nav>
 
-<script is:inline set:html={logoutScript} />
+{logoutScript ? <script is:inline set:html={logoutScript} /> : null}

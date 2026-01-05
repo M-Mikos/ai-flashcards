@@ -19,12 +19,27 @@ interface ResetRequestFormProps {
   onSubmit?: (values: ResetRequestFormValues) => Promise<void>;
 }
 
-export function ResetRequestForm({ onSubmit = async () => {} }: ResetRequestFormProps) {
+export function ResetRequestForm({ onSubmit }: ResetRequestFormProps) {
   const [formValues, setFormValues] = useState<ResetRequestFormValues>({ email: "" });
   const [errors, setErrors] = useState<Partial<Record<keyof ResetRequestFormValues, string>>>({});
   const [status, setStatus] = useState<ResetRequestStatus | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const emailId = useId();
+
+  const defaultSubmit = useCallback(async (values: ResetRequestFormValues) => {
+    const response = await fetch("/api/auth/reset", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(values),
+    });
+
+    if (!response.ok) {
+      const payload = await response.json().catch(() => null);
+      const fallbackMessage = "Nie udało się wysłać instrukcji. Spróbuj ponownie.";
+      const message = typeof payload?.error === "string" ? payload.error : fallbackMessage;
+      throw new Error(message);
+    }
+  }, []);
 
   const handleSubmit = useCallback(
     async (event: React.FormEvent<HTMLFormElement>) => {
@@ -48,7 +63,7 @@ export function ResetRequestForm({ onSubmit = async () => {} }: ResetRequestForm
       setErrors({});
       setIsSubmitting(true);
       try {
-        await onSubmit(parsed.data);
+        await (onSubmit ?? defaultSubmit)(parsed.data);
         setStatus({
           type: "success",
           message: "Jeśli konto istnieje, wkrótce otrzymasz link do resetu hasła.",
@@ -62,7 +77,7 @@ export function ResetRequestForm({ onSubmit = async () => {} }: ResetRequestForm
         setIsSubmitting(false);
       }
     },
-    [formValues, onSubmit]
+    [defaultSubmit, formValues, onSubmit]
   );
 
   const statusClasses = useMemo(() => {

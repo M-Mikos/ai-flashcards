@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useId, useMemo, useState } from "react";
+import { useCallback, useId, useMemo, useState, type FormEvent } from "react";
 import { z } from "zod";
 
 import { Button } from "../ui/button";
@@ -17,10 +17,12 @@ interface FormStatus {
 }
 
 interface RegisterFormProps {
-  onSubmit?: (values: RegisterFormValues) => Promise<void>;
+  onSubmit?: (values: RegisterFormValues) => Promise<{ message?: string } | undefined>;
 }
 
-export function RegisterForm({ onSubmit = async () => {} }: RegisterFormProps) {
+const DEFAULT_SUCCESS_MESSAGE = "Konto utworzone. Sprawdź skrzynkę i potwierdź email, aby się zalogować.";
+
+export function RegisterForm({ onSubmit }: RegisterFormProps) {
   const [formValues, setFormValues] = useState<RegisterFormValues>({
     email: "",
     password: "",
@@ -31,6 +33,29 @@ export function RegisterForm({ onSubmit = async () => {} }: RegisterFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const baseId = useId();
 
+  const defaultSubmit = useCallback(async (values: RegisterFormValues): Promise<{ message?: string }> => {
+    const response = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(values),
+    });
+
+    const payload = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      const fallbackMessage = "Nie udało się zarejestrować. Spróbuj ponownie.";
+      const message = typeof payload?.error === "string" ? payload.error : fallbackMessage;
+      throw new Error(message);
+    }
+
+    const message =
+      typeof payload === "object" && payload !== null && "message" in payload && typeof payload.message === "string"
+        ? payload.message
+        : DEFAULT_SUCCESS_MESSAGE;
+
+    return { message };
+  }, []);
+
   const handleChange = useCallback((field: keyof RegisterFormValues, value: string) => {
     setFormValues((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: undefined }));
@@ -38,7 +63,7 @@ export function RegisterForm({ onSubmit = async () => {} }: RegisterFormProps) {
   }, []);
 
   const handleSubmit = useCallback(
-    async (event: React.FormEvent<HTMLFormElement>) => {
+    async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       setStatus(null);
       const parsed = registerSchema.safeParse(formValues);
@@ -59,10 +84,17 @@ export function RegisterForm({ onSubmit = async () => {} }: RegisterFormProps) {
       setErrors({});
       setIsSubmitting(true);
       try {
-        await onSubmit(parsed.data);
+        const payload = await (onSubmit ?? defaultSubmit)(parsed.data);
+        const successMessage =
+          typeof payload === "object" &&
+          payload !== null &&
+          "message" in payload &&
+          typeof (payload as { message?: unknown }).message === "string"
+            ? (payload as { message: string }).message
+            : DEFAULT_SUCCESS_MESSAGE;
         setStatus({
           type: "success",
-          message: "Formularz gotowy, połączymy go z backendem w kolejnym kroku.",
+          message: successMessage,
         });
       } catch (error) {
         setStatus({
@@ -73,7 +105,7 @@ export function RegisterForm({ onSubmit = async () => {} }: RegisterFormProps) {
         setIsSubmitting(false);
       }
     },
-    [formValues, onSubmit]
+    [defaultSubmit, formValues, onSubmit]
   );
 
   const statusClasses = useMemo(() => {

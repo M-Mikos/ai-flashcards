@@ -54,9 +54,15 @@ export default function AccountPage() {
     setIsLoggingOut(true);
     setToast(null);
     try {
-      await delay(600);
+      const response = await fetch("/api/auth/logout", { method: "POST" });
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+        const message = payload?.error ?? "Nie udało się wylogować";
+        throw new Error(message);
+      }
       window.localStorage.clear();
-      showToast("Wylogowano (mock)", "success");
+      showToast("Wylogowano", "success");
+      window.location.href = "/auth/login";
     } catch (error) {
       showToast("Nie udało się wylogować", "error");
       throw error instanceof Error ? error : new Error("logout failed");

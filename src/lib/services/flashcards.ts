@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { TEST_USER_ID, type SupabaseClient } from "../../db/supabase.client.ts";
+import type { SupabaseClient } from "../../db/supabase.client.ts";
 import type {
   BulkCreateFlashcardsResponse,
   FlashcardCreateResponse,
@@ -134,7 +134,7 @@ export type ListFlashcardsInput = z.infer<typeof listFlashcardsSchema>;
 export interface CreateFlashcardParams {
   supabase: SupabaseClient;
   payload: CreateFlashcardInput;
-  userId?: string;
+  userId: string;
 }
 
 export interface CreateFlashcardResult {
@@ -155,10 +155,13 @@ export class NotFoundError extends Error {
 export async function createFlashcard({
   supabase,
   payload,
-  userId = TEST_USER_ID,
+  userId,
 }: CreateFlashcardParams): Promise<CreateFlashcardResult> {
   if (!supabase) {
     throw new Error("Supabase client is required");
+  }
+  if (!userId) {
+    throw new Error("User ID is required");
   }
 
   const parsed = createFlashcardSchema.parse(payload);
@@ -219,7 +222,7 @@ export async function createFlashcard({
 export interface BulkCreateFlashcardsParams {
   supabase: SupabaseClient;
   payload: BulkCreateFlashcardsInput;
-  userId?: string;
+  userId: string;
 }
 
 export interface BulkCreateFlashcardsResult {
@@ -232,10 +235,13 @@ export interface BulkCreateFlashcardsResult {
 export async function bulkCreateFlashcards({
   supabase,
   payload,
-  userId = TEST_USER_ID,
+  userId,
 }: BulkCreateFlashcardsParams): Promise<BulkCreateFlashcardsResult> {
   if (!supabase) {
     throw new Error("Supabase client is required");
+  }
+  if (!userId) {
+    throw new Error("User ID is required");
   }
 
   const parsed = bulkCreateFlashcardsSchema.parse(payload);
@@ -290,7 +296,7 @@ export async function bulkCreateFlashcards({
 export interface ListFlashcardsParams {
   supabase: SupabaseClient;
   query: FlashcardListQuery;
-  userId?: string;
+  userId: string;
 }
 
 export interface ListFlashcardsResult {
@@ -300,13 +306,12 @@ export interface ListFlashcardsResult {
 /**
  * List flashcards for a user with optional filters and pagination.
  */
-export async function listFlashcards({
-  supabase,
-  query,
-  userId = TEST_USER_ID,
-}: ListFlashcardsParams): Promise<ListFlashcardsResult> {
+export async function listFlashcards({ supabase, query, userId }: ListFlashcardsParams): Promise<ListFlashcardsResult> {
   if (!supabase) {
     throw new Error("Supabase client is required");
+  }
+  if (!userId) {
+    throw new Error("User ID is required");
   }
 
   const parsed = listFlashcardsSchema.parse(query);
@@ -352,7 +357,7 @@ export async function listFlashcards({
 export interface GetFlashcardByIdParams {
   supabase: SupabaseClient;
   id: string;
-  userId?: string;
+  userId: string;
 }
 
 export interface GetFlashcardByIdResult {
@@ -365,10 +370,13 @@ export interface GetFlashcardByIdResult {
 export async function getFlashcardById({
   supabase,
   id,
-  userId = TEST_USER_ID,
+  userId,
 }: GetFlashcardByIdParams): Promise<GetFlashcardByIdResult> {
   if (!supabase) {
     throw new Error("Supabase client is required");
+  }
+  if (!userId) {
+    throw new Error("User ID is required");
   }
 
   const { data, error } = await supabase.from("flashcards").select("*").eq("id", id).eq("user_id", userId).single();
@@ -402,7 +410,7 @@ export interface UpdateFlashcardParams {
   supabase: SupabaseClient;
   id: string;
   payload: UpdateFlashcardCommand;
-  userId?: string;
+  userId: string;
 }
 
 export interface UpdateFlashcardResult {
@@ -417,10 +425,13 @@ export async function updateFlashcard({
   supabase,
   id,
   payload,
-  userId = TEST_USER_ID,
+  userId,
 }: UpdateFlashcardParams): Promise<UpdateFlashcardResult> {
   if (!supabase) {
     throw new Error("Supabase client is required");
+  }
+  if (!userId) {
+    throw new Error("User ID is required");
   }
 
   const parsed = updateFlashcardSchema.parse(payload);
@@ -497,7 +508,7 @@ export async function updateFlashcard({
 export interface DeleteFlashcardParams {
   supabase: SupabaseClient;
   id: string;
-  userId?: string;
+  userId: string;
 }
 
 export interface DeleteFlashcardResult {
@@ -507,13 +518,12 @@ export interface DeleteFlashcardResult {
 /**
  * Delete a single flashcard owned by the user.
  */
-export async function deleteFlashcard({
-  supabase,
-  id,
-  userId = TEST_USER_ID,
-}: DeleteFlashcardParams): Promise<DeleteFlashcardResult> {
+export async function deleteFlashcard({ supabase, id, userId }: DeleteFlashcardParams): Promise<DeleteFlashcardResult> {
   if (!supabase) {
     throw new Error("Supabase client is required");
+  }
+  if (!userId) {
+    throw new Error("User ID is required");
   }
 
   const { data, error } = await supabase

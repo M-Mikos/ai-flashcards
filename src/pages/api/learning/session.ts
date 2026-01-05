@@ -6,12 +6,23 @@ export const prerender = false;
 
 const jsonHeaders = { "Content-Type": "application/json" };
 
+const unauthorizedResponse = () =>
+  new Response(JSON.stringify({ error: "User not authenticated" }), {
+    status: 401,
+    headers: jsonHeaders,
+  });
+
 export const POST: APIRoute = async ({ request, locals }) => {
   if (!locals?.supabase) {
     return new Response(JSON.stringify({ error: "Supabase client not available" }), {
       status: 500,
       headers: jsonHeaders,
     });
+  }
+
+  const userId = locals.user?.id;
+  if (!userId) {
+    return unauthorizedResponse();
   }
 
   let body: unknown;
@@ -36,6 +47,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const { result } = await getLearningSession({
       supabase: locals.supabase,
       payload: parsed.data,
+      userId,
     });
 
     return new Response(JSON.stringify(result), {

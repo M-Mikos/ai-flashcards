@@ -1,6 +1,4 @@
-"use client";
-
-import { useCallback, useId, useMemo, useState } from "react";
+import { useCallback, useId, useMemo, useState, type FormEvent } from "react";
 import { z } from "zod";
 
 import { Button } from "../ui/button";
@@ -19,12 +17,29 @@ interface LoginFormProps {
   onSubmit?: (values: LoginFormValues) => Promise<void>;
 }
 
-export function LoginForm({ onSubmit = async () => {} }: LoginFormProps) {
+export function LoginForm({ onSubmit }: LoginFormProps) {
   const [formValues, setFormValues] = useState<LoginFormValues>({ email: "", password: "" });
   const [errors, setErrors] = useState<Partial<Record<keyof LoginFormValues, string>>>({});
   const [status, setStatus] = useState<LoginFormStatus | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const baseId = useId();
+
+  const defaultSubmit = useCallback(async (values: LoginFormValues) => {
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(values),
+    });
+
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}));
+      const fallbackMessage = "Nie udało się zalogować. Spróbuj ponownie.";
+      const message = typeof payload?.error === "string" ? payload.error : fallbackMessage;
+      throw new Error(message);
+    }
+
+    window.location.href = "/";
+  }, []);
 
   const handleChange = useCallback((field: keyof LoginFormValues, value: string) => {
     setFormValues((prev) => ({ ...prev, [field]: value }));
@@ -33,7 +48,7 @@ export function LoginForm({ onSubmit = async () => {} }: LoginFormProps) {
   }, []);
 
   const handleSubmit = useCallback(
-    async (event: React.FormEvent<HTMLFormElement>) => {
+    async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       setStatus(null);
       const parsed = loginSchema.safeParse(formValues);
@@ -54,10 +69,10 @@ export function LoginForm({ onSubmit = async () => {} }: LoginFormProps) {
       setErrors({});
       setIsSubmitting(true);
       try {
-        await onSubmit(parsed.data);
+        await (onSubmit ?? defaultSubmit)(parsed.data);
         setStatus({
           type: "success",
-          message: "Formularz przygotowany do podłączenia logiki autoryzacji.",
+          message: "Zalogowano pomyślnie. Przekierowuję do Twoich fiszek.",
         });
       } catch (error) {
         setStatus({
@@ -68,7 +83,7 @@ export function LoginForm({ onSubmit = async () => {} }: LoginFormProps) {
         setIsSubmitting(false);
       }
     },
-    [formValues, onSubmit]
+    [defaultSubmit, formValues, onSubmit]
   );
 
   const statusClasses = useMemo(() => {
@@ -115,7 +130,7 @@ export function LoginForm({ onSubmit = async () => {} }: LoginFormProps) {
               required
             />
           </FormField>
-          <FormField label="Hasło" htmlFor={`${baseId}-password`} error={errors.password} helper="Minimum 12 znaków.">
+          <FormField label="Hasło" htmlFor={`${baseId}-password`} error={errors.password} helper="Minimum 8 znaków.">
             <input
               id={`${baseId}-password`}
               name="password"
