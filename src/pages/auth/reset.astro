@@ -1,0 +1,21 @@
+---
+import AuthLayout from "@/layouts/AuthLayout.astro";
+import { ResetRequestForm } from "@/components/auth/ResetRequestForm";
+
+const handleResetRequest = async (values: { email: string }) => {
+  console.log("Reset request payload:", values);
+};
+---
+
+<AuthLayout title="Reset hasła" heading="Odzyskaj dostęp">
+  <div class="grid gap-6 lg:grid-cols-[1fr_minmax(0,0.45fr)]">
+    <ResetRequestForm client:load onSubmit={handleResetRequest} />
+    <div
+      class="hidden flex-col gap-3 rounded-2xl border border-border bg-card/80 p-5 text-sm text-muted-foreground shadow-lg shadow-black/5 dark:shadow-black/40 sm:flex"
+    >
+      <p class="text-xs uppercase tracking-[0.4em] text-muted-foreground">Co dalej?</p>
+      <p>Wysłany link pozwoli ustawić nowe hasło.</p>
+      <p class="text-xs">Po kliknięciu linku z emaila trafisz na stronę z formularzem potwierdzającym reset..</p>
+    </div>
+  </div>
+</AuthLayout>

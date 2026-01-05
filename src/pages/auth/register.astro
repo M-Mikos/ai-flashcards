@@ -1,0 +1,12 @@
+---
+import AuthLayout from "@/layouts/AuthLayout.astro";
+import { RegisterForm } from "@/components/auth/RegisterForm";
+
+const handleRegister = async (values: { email: string; password: string; confirmPassword: string }) => {
+  console.log("Register form payload:", values);
+};
+---
+
+<AuthLayout title="Rejestracja" heading="Zacznij tworzyć fiszki">
+  <RegisterForm client:load onSubmit={handleRegister} />
+</AuthLayout>

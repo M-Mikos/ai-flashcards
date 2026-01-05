@@ -1,0 +1,62 @@
+---
+import "../styles/global.css";
+
+interface Props {
+  title?: string;
+  heading?: string;
+  description?: string;
+}
+
+const { title = "AI Flashcards", heading, description } = Astro.props as Props;
+
+const themeBootScript = `
+(function () {
+  const STORAGE_KEY = "theme-mode";
+  const isValidMode = (value) => value === "light" || value === "dark" || value === "system";
+  let storedMode = null;
+  try {
+    storedMode = localStorage.getItem(STORAGE_KEY);
+  } catch {
+    storedMode = null;
+  }
+  const mode = isValidMode(storedMode) ? storedMode : "system";
+  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const shouldUseDark = mode === "dark" || (mode === "system" && prefersDark);
+  const root = document.documentElement;
+  root.classList.toggle("dark", shouldUseDark);
+  root.setAttribute("data-theme", shouldUseDark ? "dark" : "light");
+  root.style.colorScheme = shouldUseDark ? "dark" : "light";
+})();
+`;
+---
+
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <script is:inline set:html={themeBootScript} />
+  </head>
+  <body class="bg-background text-foreground">
+    <main class="flex min-h-screen flex-col items-center justify-center px-4 py-10">
+      <div class="w-full max-w-5xl space-y-6">
+        <header class="flex flex-col gap-2 text-center">
+          <p class="text-sm uppercase tracking-[0.3em] text-muted-foreground">AI Flashcards</p>
+          <h1 class="text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
+            {heading ?? title}
+          </h1>
+          <p class="text-sm text-muted-foreground sm:text-base">
+            {
+              description ??
+                "Zadbaj o bezpieczeństwo konta, szybkie logowanie oraz odświeżanie hasła w aplikacji do nauki fiszek."
+            }
+          </p>
+        </header>
+        <section class="grid gap-6 justify-center"><slot /></section>
+      </div>
+    </main>
+  </body>
+</html>

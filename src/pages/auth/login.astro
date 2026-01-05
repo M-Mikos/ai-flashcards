@@ -1,0 +1,12 @@
+---
+import AuthLayout from "@/layouts/AuthLayout.astro";
+import { LoginForm } from "@/components/auth/LoginForm";
+
+const handleLogin = async (values: { email: string; password: string }) => {
+  console.log("Login form payload:", values);
+};
+---
+
+<AuthLayout title="Logowanie" heading="Witaj ponownie">
+  <LoginForm client:load onSubmit={handleLogin} />
+</AuthLayout>
