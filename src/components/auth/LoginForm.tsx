@@ -144,7 +144,7 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
             />
           </FormField>
           <div className="flex justify-end">
-            <Button type="submit" disabled={isSubmitting}>
+            <Button data-testid="login-submit-button" type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Łączenie..." : "Zaloguj się"}
             </Button>
           </div>

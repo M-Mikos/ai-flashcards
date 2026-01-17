@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import { defineConfig, devices } from "@playwright/test";
 
 const PORT = process.env.E2E_DEV_SERVER_PORT ?? "4173";
@@ -8,7 +11,7 @@ export default defineConfig({
   testDir: "tests/e2e",
   fullyParallel: true,
   retries: process.env.CI ? 2 : 0,
-  timeout: 60_000,
+  timeout: 10_000,
   reporter: process.env.CI ? "github" : [["list"], ["html", { outputFolder: "playwright-report", open: "never" }]],
   use: {
     baseURL,

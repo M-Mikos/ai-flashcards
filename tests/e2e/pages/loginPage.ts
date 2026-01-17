@@ -12,7 +12,7 @@ export class LoginPage {
     this.heading = page.getByRole("heading", { name: "Witaj ponownie" });
     this.emailInput = page.getByLabel("Email");
     this.passwordInput = page.getByLabel("Hasło");
-    this.submitButton = page.getByRole("button", { name: "Zaloguj się" });
+    this.submitButton = page.getByTestId("login-submit-button");
   }
 
   async goto() {
