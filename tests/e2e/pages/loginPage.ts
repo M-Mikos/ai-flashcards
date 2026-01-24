@@ -25,4 +25,9 @@ export class LoginPage {
     await expect(this.passwordInput).toBeVisible();
     await expect(this.submitButton).toBeEnabled();
   }
+
+  async submitAndWaitForSuccess() {
+    await this.submitButton.click();
+    await this.page.waitForTimeout(1000);
+  }
 }

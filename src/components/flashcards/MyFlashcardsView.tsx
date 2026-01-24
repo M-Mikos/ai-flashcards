@@ -173,7 +173,7 @@ function TopBar({ onGenerate, onCreate }: { onGenerate: () => void; onCreate: ()
         <Button variant="outline" onClick={onGenerate}>
           Generuj
         </Button>
-        <Button data-test-id="open-add-dialog-button" onClick={onCreate}>
+        <Button data-testid="open-add-dialog-button" onClick={onCreate}>
           Utwórz
         </Button>
       </div>
@@ -290,16 +290,13 @@ function FlashcardCard({
 
   return (
     <article
-      data-test-id="flashcard-card"
+      data-testid="flashcard-card"
       data-card-id={item.id}
       className="group flex h-full flex-col justify-between rounded-xl border bg-card p-4 shadow-sm transition hover:border-ring hover:bg-accent hover:shadow-md"
     >
       <div className="space-y-2">
         <div className="flex items-start justify-between gap-3">
-          <p
-            className="line-clamp-3 text-base font-medium leading-tight text-foreground"
-            data-test-id="flashcard-front"
-          >
+          <p className="line-clamp-3 text-base font-medium leading-tight text-foreground" data-testid="flashcard-front">
             {item.front}
           </p>
           <span className="shrink-0 rounded-full bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
@@ -413,7 +410,7 @@ function AddFlashcardDialog({
           input={
             <textarea
               value={form.front}
-              data-test-id="flashcard-front-input"
+              data-testid="flashcard-front-input"
               onChange={(e) => setForm((prev) => ({ ...prev, front: e.target.value }))}
               className="min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
               maxLength={200}
@@ -427,7 +424,7 @@ function AddFlashcardDialog({
           input={
             <textarea
               value={form.back}
-              data-test-id="flashcard-back-input"
+              data-testid="flashcard-back-input"
               onChange={(e) => setForm((prev) => ({ ...prev, back: e.target.value }))}
               className="min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
               maxLength={500}
@@ -439,7 +436,7 @@ function AddFlashcardDialog({
           <Button type="button" variant="outline" onClick={onClose}>
             Anuluj
           </Button>
-          <Button type="submit" data-test-id="save-flashcard-button" disabled={submitting}>
+          <Button type="submit" data-testid="save-flashcard-button" disabled={submitting}>
             {submitting ? "Zapisywanie..." : "Zapisz"}
           </Button>
         </div>
@@ -611,7 +608,7 @@ function Dialog({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div
-        data-test-id={dataTestId ?? "dialog"}
+        data-testid={dataTestId ?? "dialog"}
         role="dialog"
         aria-modal="true"
         aria-label={title}
@@ -710,7 +707,7 @@ function EmptyState({ onCreate, onGenerate }: { onCreate: () => void; onGenerate
         <Button variant="outline" onClick={onGenerate}>
           Generuj
         </Button>
-        <Button data-test-id="empty-open-add-dialog-button" onClick={onCreate}>
+        <Button data-testid="empty-open-add-dialog-button" onClick={onCreate}>
           Utwórz
         </Button>
       </div>

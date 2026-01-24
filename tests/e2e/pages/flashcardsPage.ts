@@ -48,8 +48,7 @@ export class FlashcardsPage {
   }
 
   async openCreateDialog() {
-    await this.openAddButton.waitFor({ state: "visible", timeout: 15_000 });
-    await this.openAddButton.click({ timeout: 5_000 });
+    await this.openAddButton.click();
     await this.dialog.expectOpen();
   }
 
@@ -57,6 +56,10 @@ export class FlashcardsPage {
     await this.openCreateDialog();
     await this.dialog.fillForm({ front, back });
     await this.dialog.submitAndWaitForClose();
+  }
+
+  async expectFlashcardsPageVisible() {
+    await expect(this.openAddButton).toBeVisible();
   }
 
   getCardByFront(frontText: string) {

@@ -13,13 +13,13 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   timeout: 10_000,
   reporter: process.env.CI ? "github" : [["list"], ["html", { outputFolder: "playwright-report", open: "never" }]],
+  globalTeardown: "./tests/e2e/global-teardown.ts",
   use: {
     baseURL,
     browserName: "chromium",
     headless: true,
     trace: "on-first-retry",
     screenshot: "only-on-failure",
-    video: "retain-on-failure",
   },
   projects: [
     {

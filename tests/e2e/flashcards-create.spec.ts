@@ -9,13 +9,15 @@ test.describe("Flashcards / Create", () => {
 
     const loginPage = new LoginPage(page);
     await loginPage.goto();
+    await page.waitForTimeout(500); // Wait for the elements hydration
     await loginPage.expectFormVisible();
+    await page.waitForTimeout(500); // Wait for the elements hydration
     await loginPage.emailInput.fill(email);
     await loginPage.passwordInput.fill(password);
-    await loginPage.submitButton.click();
+    await loginPage.submitAndWaitForSuccess();
 
     const flashcardsPage = new FlashcardsPage(page);
-    await flashcardsPage.goto();
+    await flashcardsPage.expectFlashcardsPageVisible();
 
     const front = `E2E front ${Date.now()}`;
     const back = "E2E back content";
