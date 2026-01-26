@@ -1,6 +1,6 @@
 # 10x Astro Starter
 
-A modern, opinionated starter template for building fast, accessible, and AI-friendly web applications.
+A modern, opinionated starter template for building fast, accessible, and AI-friendly web applications!
 
 ## Tech Stack
 
