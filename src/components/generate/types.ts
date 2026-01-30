@@ -15,4 +15,3 @@ export interface GenerateViewState {
   proposals: FlashcardProposal[];
   generationId: string | null;
 }
-

@@ -23,4 +23,3 @@ export function useCharacterCounter(value: string, min = MIN_TEXT_LENGTH, max = 
     };
   }, [max, min, value]);
 }
-
